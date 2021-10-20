@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
 
 export default class Chat extends React.Component {
-  compnentDidMount() {
+  componentDidMount() {
     let name = this.props.route.params.name;
     this.props.navigation.setOptions({ title: name });
   }
