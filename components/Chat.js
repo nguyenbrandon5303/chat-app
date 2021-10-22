@@ -9,6 +9,9 @@ import NetInfo from '@react-native-community/netinfo';
 const firebase = require('firebase');
 require('firebase/firestore');
 
+import CustomActions from './CustomActions';
+import MapView from 'react-native-maps';
+
 export default class Chat extends React.Component {
   constructor() {
     super();
@@ -19,7 +22,9 @@ export default class Chat extends React.Component {
         _id: '',
         name: ''
       },
-      isConnected: false
+      image: null,
+      location: null,
+      isConnected: false,
     }
 
     const firebaseConfig = {
@@ -63,6 +68,10 @@ export default class Chat extends React.Component {
           }
           this.setState({
             uid: user.uid,
+            user: {
+              _id: user.uid,
+              name: name
+            },
             messages: []
           });
           this.unsubscribe = this.referenceChatMessages
@@ -100,7 +109,9 @@ export default class Chat extends React.Component {
         user: {
           _id: data.user._id,
           name: data.user.name,
-        }
+        },
+        image: data.image || null,
+        location: data.location || null,
       });
     });
 
@@ -114,9 +125,11 @@ export default class Chat extends React.Component {
     this.referenceChatMessages.add({
       _id: message._id,
       uid: this.state.uid,
-      text: message.text,
+      text: message.text || null,
       createdAt: message.createdAt,
       user: message.user,
+      image: message.image || null,
+      location: message.location || null
     });
   }
 
@@ -167,26 +180,52 @@ export default class Chat extends React.Component {
       <Bubble
         {...props}
         wrapperStyle={{
-          right: {
-            backgroundColor: '#000'
-          }
+          // right: {
+          //   backgroundColor: '#000'
+          // }
         }}
       />
     )
+  }
+
+  renderCustomActions = (props) => {
+    return <CustomActions {...props} />;
+  };
+
+  renderCustomView(props) {
+    const { currentMessage } = props;
+    if (currentMessage.location) {
+      return (
+        <MapView
+          style={{
+            width: 150,
+            height: 100,
+            borderRadius: 13,
+            margin: 3
+          }}
+          region={{
+            latitude: currentMessage.location.latitude,
+            longitude: currentMessage.location.longitude,
+            latitudeDelta: 0.0922,
+            longitudeDelta: 0.0421,
+          }}
+        />
+      );
+    }
+    return null;
   }
 
   render() {
     return (
       <View style={{ flex: 1 }}>
         <GiftedChat
+          renderCustomView={this.renderCustomView}
+          renderActions={this.renderCustomActions}
           renderInputToolbar={this.renderInputToolbar}
           renderBubble={this.renderBubble.bind(this)}
           messages={this.state.messages}
           onSend={messages => this.onSend(messages)}
-          user={{
-            _id: this.state.uid,
-            name: this.props.route.params.name
-          }}
+          user={this.state.user}
         />
         {Platform.OS === 'android' ? <KeyboardAvoidingView behavior="height" /> : null}
       </View >
